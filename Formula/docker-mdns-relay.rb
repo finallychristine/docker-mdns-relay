@@ -6,6 +6,7 @@ class DockerMdnsRelay < Formula
       tag:      "v0.0.4",
       revision: "fe3a4a6d7716d4cf2f16726212dd89fe3e3b6eb6"
   version "0.0.4"
+  revision 1
 
   depends_on "python@3.13"
 
