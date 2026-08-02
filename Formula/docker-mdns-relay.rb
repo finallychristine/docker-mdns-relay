@@ -9,8 +9,9 @@ class DockerMdnsRelay < Formula
   depends_on "python@3.13"
 
   def install
-    bin.install "docker_mdns_relay.py" => "docker-mdns-relay"
-    rewrite_shebang detected_python_shebang, bin/"docker-mdns-relay"
+    libexec.install "docker_mdns_relay.py" => "docker-mdns-relay"
+    bin.write_env_script libexec/"docker-mdns-relay",
+      PATH: formula_opt_bin("python@3.13")
     etc.install "docker-mdns-relay.conf"
   end
 
