@@ -11,8 +11,8 @@ class DockerMdnsRelay < Formula
 
   def install
     libexec.install "docker_mdns_relay.py" => "docker-mdns-relay"
-    (bin/"docker-mdns-relay").write_env_script libexec/"docker-mdns-relay",
-      PATH: formula_opt_bin("python@3.13")
+    (bin/"docker-mdns-relay").write_env_script formula_opt_bin("python@3.13")/"python3.13",
+      libexec/"docker-mdns-relay", {}
     etc.install "docker-mdns-relay.conf"
   end
 
