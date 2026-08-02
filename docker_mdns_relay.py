@@ -65,6 +65,10 @@ def interface_ipv4(interface):
         probe = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             response = fcntl.ioctl(probe, 0x8915, request)
+        except OSError as error:
+            raise RuntimeError(
+                f"Unable to determine IPv4 address for interface {interface} via SIOCGIFADDR: {error}"
+            ) from error
         finally:
             probe.close()
         return socket.inet_ntoa(response[20:24])
@@ -168,7 +172,7 @@ def run_client(arguments):
     ipv6_socket, ipv6_interface_index = make_mdns_ipv6_socket(arguments.interface)
     tunnel_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     tunnel_destination = (arguments.server, arguments.port)
-    logging.info("Relaying to host at %s:%s", *tunnel_destination)
+    logging.info("mDNS relay connected to server at %s:%s", *tunnel_destination)
 
     recently_reflected = RecentPackets()
     next_hello = 0
@@ -199,13 +203,12 @@ def run_client(arguments):
 
 def parse_arguments():
     bootstrap_parser = argparse.ArgumentParser(add_help=False)
-    bootstrap_parser.add_argument("mode", choices=("host", "server", "client"), nargs="?")
+    bootstrap_parser.add_argument("mode", choices=("host", "client"), nargs="?")
     bootstrap_parser.add_argument("--config")
     bootstrap_arguments, _ = bootstrap_parser.parse_known_args()
 
     configuration = {}
-    config_section = "host" if bootstrap_arguments.mode == "server" else bootstrap_arguments.mode
-    if bootstrap_arguments.config and config_section:
+    if bootstrap_arguments.config and bootstrap_arguments.mode:
         config = configparser.ConfigParser()
         try:
             with open(bootstrap_arguments.config, encoding="utf-8") as config_file:
@@ -213,11 +216,11 @@ def parse_arguments():
         except (OSError, configparser.Error) as error:
             bootstrap_parser.error(f"Unable to read configuration file: {error}")
 
-        if not config.has_section(config_section):
+        if not config.has_section(bootstrap_arguments.mode):
             bootstrap_parser.error(
-                f"Configuration file has no [{config_section}] section"
+                f"Configuration file has no [{bootstrap_arguments.mode}] section"
             )
-        configuration = dict(config.items(config_section))
+        configuration = dict(config.items(bootstrap_arguments.mode))
 
     try:
         port = int(configuration.get("port", TUNNEL_PORT))
@@ -225,7 +228,7 @@ def parse_arguments():
         bootstrap_parser.error("Configuration value 'port' must be an integer")
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("host", "server", "client"))
+    parser.add_argument("mode", choices=("host", "client"))
     parser.add_argument("--config", help="INI file containing a [host] or [client] section")
     parser.add_argument(
         "--interface",
@@ -253,8 +256,6 @@ def parse_arguments():
         parser.error("--interface is required unless it is set in the configuration file")
     if arguments.mode == "client" and not arguments.server:
         parser.error("--server is required in client mode unless it is set in the configuration file")
-    if arguments.mode == "server":
-        arguments.mode = "host"
     return arguments
 
 

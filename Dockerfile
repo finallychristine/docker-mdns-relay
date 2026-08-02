@@ -1,5 +1,5 @@
 FROM python:3.13-alpine
-COPY docker_mdns_relay.py /usr/local/bin/mdns-relay
-COPY docker-mdns-relay.conf /etc/docker-mdns-relay.conf
-ENTRYPOINT ["python3", "/usr/local/bin/mdns-relay"]
-CMD ["server", "--config", "/etc/docker-mdns-relay.conf"]
+COPY docker_mdns_relay.py /app/docker_mdns_relay.py
+COPY docker-mdns-relay.conf /app/docker-mdns-relay.conf
+ENTRYPOINT ["python3", "/app/docker_mdns_relay.py"]
+CMD ["client", "--config", "/app/docker-mdns-relay.conf"]

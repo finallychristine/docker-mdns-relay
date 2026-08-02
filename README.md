@@ -38,7 +38,7 @@ tail -f "$(brew --prefix)/var/log/docker-mdns-relay.log"
 The same config-file format can be used outside Homebrew, including in a container:
 
 ```sh
-docker-mdns-relay client --config /etc/docker-mdns-relay.conf
+docker-mdns-relay client --config /app/docker-mdns-relay.conf
 ```
 
 The service listens on UDP port `15354`. Restrict access with a macOS PF rule
@@ -53,11 +53,14 @@ discovery. In Compose, use `host.docker.internal` to reach the macOS host relay:
 services:
   mdns-relay:
     build: .
-    command: ["client", "--config", "/etc/docker-mdns-relay.conf"]
+    command: ["client", "--config", "/app/docker-mdns-relay.conf"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - network-discovery
 ```
 
-By default, the image starts the relay server with its included `[host]` settings.
-Override the command as above to use it as a client. The client and the services
-it supports should share the same Docker network.
+By default, the image starts the client relay with its included `[client]` settings
+(`eth0` inside the container). The `[host]` section remains for the macOS
+Homebrew service. The client and the services it supports should share the same
+Docker network.

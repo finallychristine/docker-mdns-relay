@@ -1,0 +1,7 @@
+services:
+  mdns-relay:
+    build: .
+    container_name: mdns-relay
+    network_mode: host
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
