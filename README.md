@@ -10,8 +10,8 @@ it just replayed to prevent loops.
 Install the personal tap and start the service:
 
 ```sh
-brew tap finallychristine/docker-mdns-relay
-brew install docker-mdns-relay
+brew tap finallychristine/docker-mdns-relay git@github.com:finallychristine/docker-mdns-relay.git
+brew install finallychristine/docker-mdns-relay/docker-mdns-relay
 brew services start docker-mdns-relay
 ```
 
