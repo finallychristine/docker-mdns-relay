@@ -7,6 +7,7 @@ container network's multicast groups and connects to that host relay.
 """
 
 import argparse
+import configparser
 import hashlib
 import logging
 import select
@@ -197,16 +198,60 @@ def run_client(arguments):
 
 
 def parse_arguments():
+    bootstrap_parser = argparse.ArgumentParser(add_help=False)
+    bootstrap_parser.add_argument("mode", choices=("host", "client"), nargs="?")
+    bootstrap_parser.add_argument("--config")
+    bootstrap_arguments, _ = bootstrap_parser.parse_known_args()
+
+    configuration = {}
+    if bootstrap_arguments.config and bootstrap_arguments.mode:
+        config = configparser.ConfigParser()
+        try:
+            with open(bootstrap_arguments.config, encoding="utf-8") as config_file:
+                config.read_file(config_file)
+        except (OSError, configparser.Error) as error:
+            bootstrap_parser.error(f"Unable to read configuration file: {error}")
+
+        if not config.has_section(bootstrap_arguments.mode):
+            bootstrap_parser.error(
+                f"Configuration file has no [{bootstrap_arguments.mode}] section"
+            )
+        configuration = dict(config.items(bootstrap_arguments.mode))
+
+    try:
+        port = int(configuration.get("port", TUNNEL_PORT))
+    except ValueError:
+        bootstrap_parser.error("Configuration value 'port' must be an integer")
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=("host", "client"))
-    parser.add_argument("--interface", required=True, help="network interface, for example en0 or eth0")
-    parser.add_argument("--port", type=int, default=TUNNEL_PORT)
-    parser.add_argument("--log-level", default="INFO", choices=("DEBUG", "INFO", "WARNING", "ERROR"))
-    parser.add_argument("--bind-address", default="0.0.0.0", help="host-mode tunnel bind address")
-    parser.add_argument("--server", help="host-mode tunnel address for client mode")
+    parser.add_argument("--config", help="INI file containing a [host] or [client] section")
+    parser.add_argument(
+        "--interface",
+        default=configuration.get("interface"),
+        help="network interface, for example en0 or eth0",
+    )
+    parser.add_argument("--port", type=int, default=port)
+    parser.add_argument(
+        "--log-level",
+        default=configuration.get("log_level", "INFO").upper(),
+        choices=("DEBUG", "INFO", "WARNING", "ERROR"),
+    )
+    parser.add_argument(
+        "--bind-address",
+        default=configuration.get("bind_address", "0.0.0.0"),
+        help="host-mode tunnel bind address",
+    )
+    parser.add_argument(
+        "--server",
+        default=configuration.get("server"),
+        help="host-mode tunnel address for client mode",
+    )
     arguments = parser.parse_args()
+    if not arguments.interface:
+        parser.error("--interface is required unless it is set in the configuration file")
     if arguments.mode == "client" and not arguments.server:
-        parser.error("--server is required in client mode")
+        parser.error("--server is required in client mode unless it is set in the configuration file")
     return arguments
 
 

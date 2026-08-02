@@ -15,19 +15,30 @@ brew install docker-mdns-relay
 brew services start docker-mdns-relay
 ```
 
-The Homebrew service starts in host mode on `en0`, the usual Wi-Fi/Ethernet LAN
-interface on macOS. Check status and logs with:
+The service reads its settings from Homebrew's default configuration file:
+
+```sh
+$(brew --prefix)/etc/docker-mdns-relay.conf
+```
+
+It starts in host mode on `en0`, the usual Wi-Fi/Ethernet LAN interface on macOS.
+To use another interface, edit the `interface` value under `[host]`, then restart:
+
+```sh
+brew services restart docker-mdns-relay
+```
+
+Check status and logs with:
 
 ```sh
 brew services info docker-mdns-relay
 tail -f "$(brew --prefix)/var/log/docker-mdns-relay.log"
 ```
 
-For a different LAN interface, run the relay manually with the interface you need:
+The same config-file format can be used outside Homebrew, including in a container:
 
 ```sh
-brew services stop docker-mdns-relay
-docker-mdns-relay host --interface en1
+docker-mdns-relay client --config /etc/docker-mdns-relay.conf
 ```
 
 The service listens on UDP port `15354`. Restrict access with a macOS PF rule
@@ -48,7 +59,3 @@ services:
 ```
 
 The client and the services it supports should share the same Docker network.
-```
-
-The host relay listens on UDP 15354. Restrict access with the macOS PF rule
-before exposing this setup beyond the Docker Desktop network.
