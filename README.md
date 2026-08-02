@@ -53,9 +53,11 @@ discovery. In Compose, use `host.docker.internal` to reach the macOS host relay:
 services:
   mdns-relay:
     build: .
-    command: ["client", "--interface", "eth0", "--server", "host.docker.internal"]
+    command: ["client", "--config", "/etc/docker-mdns-relay.conf"]
     networks:
       - network-discovery
 ```
 
-The client and the services it supports should share the same Docker network.
+By default, the image starts the relay server with its included `[host]` settings.
+Override the command as above to use it as a client. The client and the services
+it supports should share the same Docker network.

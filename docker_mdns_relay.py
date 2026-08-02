@@ -199,12 +199,13 @@ def run_client(arguments):
 
 def parse_arguments():
     bootstrap_parser = argparse.ArgumentParser(add_help=False)
-    bootstrap_parser.add_argument("mode", choices=("host", "client"), nargs="?")
+    bootstrap_parser.add_argument("mode", choices=("host", "server", "client"), nargs="?")
     bootstrap_parser.add_argument("--config")
     bootstrap_arguments, _ = bootstrap_parser.parse_known_args()
 
     configuration = {}
-    if bootstrap_arguments.config and bootstrap_arguments.mode:
+    config_section = "host" if bootstrap_arguments.mode == "server" else bootstrap_arguments.mode
+    if bootstrap_arguments.config and config_section:
         config = configparser.ConfigParser()
         try:
             with open(bootstrap_arguments.config, encoding="utf-8") as config_file:
@@ -212,11 +213,11 @@ def parse_arguments():
         except (OSError, configparser.Error) as error:
             bootstrap_parser.error(f"Unable to read configuration file: {error}")
 
-        if not config.has_section(bootstrap_arguments.mode):
+        if not config.has_section(config_section):
             bootstrap_parser.error(
-                f"Configuration file has no [{bootstrap_arguments.mode}] section"
+                f"Configuration file has no [{config_section}] section"
             )
-        configuration = dict(config.items(bootstrap_arguments.mode))
+        configuration = dict(config.items(config_section))
 
     try:
         port = int(configuration.get("port", TUNNEL_PORT))
@@ -224,7 +225,7 @@ def parse_arguments():
         bootstrap_parser.error("Configuration value 'port' must be an integer")
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("host", "client"))
+    parser.add_argument("mode", choices=("host", "server", "client"))
     parser.add_argument("--config", help="INI file containing a [host] or [client] section")
     parser.add_argument(
         "--interface",
@@ -252,6 +253,8 @@ def parse_arguments():
         parser.error("--interface is required unless it is set in the configuration file")
     if arguments.mode == "client" and not arguments.server:
         parser.error("--server is required in client mode unless it is set in the configuration file")
+    if arguments.mode == "server":
+        arguments.mode = "host"
     return arguments
 
 
