@@ -2,9 +2,9 @@ class DockerMdnsRelay < Formula
   desc "Bridge mDNS traffic between macOS and Docker Desktop networks"
   homepage "https://github.com/finallychristine/docker-mdns-relay"
   url "https://github.com/finallychristine/docker-mdns-relay.git",
-      tag:      "v0.0.2",
-      revision: "8e3d7c3761749fd0681a37ff7904a9a0c2898c02"
-  version "0.0.2"
+      tag:      "v0.0.3",
+      revision: "c5cd91d013713151a43d0b9bd3012cf68a839bcd"
+  version "0.0.3"
 
   depends_on "python@3.13"
 
